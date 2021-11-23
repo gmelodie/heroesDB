@@ -3,6 +3,7 @@ import sys
 import mpyq
 import pprint
 import heroprotocol
+from tqdm import tqdm
 from heroprotocol.versions import build, latest
 
 NUMARGS=2
@@ -48,65 +49,69 @@ def extract_player_details(player):
 
 def get_players_stats(directory):
     players = {}
-    for i, filename in enumerate(os.listdir(directory)):
-        if filename.endswith(".StormReplay"):
-            full_filename = directory+'/'+filename
-            details = get_details(full_filename)
-            for player in details['m_playerList']:
-                nick, player_id, hero, win = extract_player_details(player)
+    for i, filename in tqdm(enumerate(os.listdir(directory)), \
+                            total=len(os.listdir(directory)), unit='replays', \
+                            colour='green', desc="Loading replays", unit_scale=True,\
+                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}{postfix}'+' '*30):
+        if not filename.endswith(".StormReplay"):
+            continue
+        full_filename = directory+'/'+filename
+        details = get_details(full_filename)
+        for player in details['m_playerList']:
+            nick, player_id, hero, win = extract_player_details(player)
 
-                # update overall statistics
-                if nick not in players:
-                    players[nick] = {'wins': 0,\
-                                     'total_games': 0,\
-                                     'win_rate': 0,\
-                                     'heroes': {},\
-                                     'games': {}}
-                if hero not in players[nick]['heroes']:
-                    players[nick]['heroes'][hero] = {"total_games": 0,\
-                                                     "wins": 0,\
-                                                     "win_rate": 0}
+            # update overall statistics
+            if nick not in players:
+                players[nick] = {'wins': 0,\
+                                 'total_games': 0,\
+                                 'win_rate': 0,\
+                                 'heroes': {},\
+                                 'games': {}}
+            if hero not in players[nick]['heroes']:
+                players[nick]['heroes'][hero] = {"total_games": 0,\
+                                                 "wins": 0,\
+                                                 "win_rate": 0}
 
-                players[nick]['heroes'][hero]['total_games'] += 1
-                players[nick]['total_games'] += 1
-                if win:
-                    players[nick]['heroes'][hero]['wins'] += 1
-                    players[nick]['wins'] += 1
+            players[nick]['heroes'][hero]['total_games'] += 1
+            players[nick]['total_games'] += 1
+            if win:
+                players[nick]['heroes'][hero]['wins'] += 1
+                players[nick]['wins'] += 1
 
-                # update overall win rate
-                wins = players[nick]['wins']
-                total_games = players[nick]['total_games']
-                win_rate = int(100*wins/total_games)
-                players[nick]['win_rate'] = win_rate
+            # update overall win rate
+            wins = players[nick]['wins']
+            total_games = players[nick]['total_games']
+            win_rate = int(100*wins/total_games)
+            players[nick]['win_rate'] = win_rate
 
-                # update per-hero win rate
-                wins = players[nick]['heroes'][hero]['wins']
-                total_games = players[nick]['heroes'][hero]['total_games']
-                win_rate = int(100*wins/total_games)
-                players[nick]['heroes'][hero]['win_rate'] = win_rate
+            # update per-hero win rate
+            wins = players[nick]['heroes'][hero]['wins']
+            total_games = players[nick]['heroes'][hero]['total_games']
+            win_rate = int(100*wins/total_games)
+            players[nick]['heroes'][hero]['win_rate'] = win_rate
 
-                # update map statistics
-                map_title = details['m_title'].decode()
-                if map_title not in players[nick]['games']:
-                    players[nick]['games'][map_title] = {'wins': 0, \
-                                                         'total_games': 0, \
-                                                         'win_rate': 0,
-                                                         'heroes': {}}
-                if hero not in players[nick]['games'][map_title]['heroes']:
-                    players[nick]['games'][map_title]['heroes'][hero] = 0
+            # update map statistics
+            map_title = details['m_title'].decode()
+            if map_title not in players[nick]['games']:
+                players[nick]['games'][map_title] = {'wins': 0, \
+                                                     'total_games': 0, \
+                                                     'win_rate': 0,
+                                                     'heroes': {}}
+            if hero not in players[nick]['games'][map_title]['heroes']:
+                players[nick]['games'][map_title]['heroes'][hero] = 0
 
-                players[nick]['games'][map_title]['heroes'][hero] += 1
-                players[nick]['games'][map_title]['total_games'] += 1
-                if win:
-                    players[nick]['games'][map_title]['wins'] += 1
+            players[nick]['games'][map_title]['heroes'][hero] += 1
+            players[nick]['games'][map_title]['total_games'] += 1
+            if win:
+                players[nick]['games'][map_title]['wins'] += 1
 
-                # update per-map win rate
-                wins = players[nick]['games'][map_title]['wins']
-                total_games = players[nick]['games'][map_title]['total_games']
-                win_rate = int(100*wins/total_games)
-                players[nick]['games'][map_title]['win_rate'] = win_rate
+            # update per-map win rate
+            wins = players[nick]['games'][map_title]['wins']
+            total_games = players[nick]['games'][map_title]['total_games']
+            win_rate = int(100*wins/total_games)
+            players[nick]['games'][map_title]['win_rate'] = win_rate
 
-        print(f'Loading files: {i}')
+        # print(f'Loading files: {i}')
     if TESTING:
         pp.pprint(players)
     return players
