@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import mpyq
 import pprint
 import heroprotocol
@@ -7,6 +8,7 @@ from tqdm import tqdm
 from heroprotocol.versions import build, latest
 
 NUMARGS=2
+DB_FILE="db.json"
 TESTING=False
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -123,9 +125,9 @@ def update_players_info(details, players):
         players[nick]['games'][map_title]['win_rate'] = win_rate
 
 
-def get_players_stats(directory):
-    players = {}
-    seen_games = {}
+def load_replay_files(database, directory):
+    players = database["players"]
+    seen_games = database["seen_games"]
     for i, filename in tqdm(enumerate(os.listdir(directory)), \
                             total=len(os.listdir(directory)), unit='replays', \
                             colour='green', desc="Loading replays", unit_scale=True,\
@@ -138,18 +140,18 @@ def get_players_stats(directory):
 
         game_id = get_game_id(full_filename)
         if game_id in seen_games:
-            if TESTING:
-                print(f"Replay {filename} already seen in {seen_games[game_id]}")
+            # if TESTING:
+            print(f"Replay {filename} already seen in {seen_games[game_id]}")
             continue
         seen_games[game_id] = filename
 
         details = get_details(full_filename)
         update_players_info(details, players)
 
-        # print(f'Loading files: {i}')
     if TESTING:
         pp.pprint(players)
-    return players
+
+    return {"players": players, "seen_games": seen_games}
 
 
 def print_overall_stats(player):
@@ -170,7 +172,7 @@ def print_maps(maps):
     for map_title, stats in maps:
         print(f"{stats['win_rate']}%\t{map_title}")
         sorted_heroes = sorted(stats['heroes'].items(), \
-                reverse=True, key=lambda item: item[1])
+                key=lambda item: item[1])
 
         for hero, ngames in sorted_heroes:
             print(f'\t{ngames} -> {hero}')
@@ -178,19 +180,37 @@ def print_maps(maps):
     print()
 
 
+def save_database_json(database, filename):
+    with open(filename, "w") as json_file:
+        json.dump(database, json_file)
+
+
+def load_database_json(filename):
+    if not os.path.isfile(filename):
+        return {"players": {}, "seen_games": {}}
+
+    with open(filename, "r") as json_file:
+        database = json.load(json_file)
+    return database
+
+
 if __name__ == '__main__':
-    if len(sys.argv) != NUMARGS:
-        print('usage: python3 main.py <REPLAY_FOLDER>')
+    if len(sys.argv) > NUMARGS:
+        print('usage: python3 main.py [REPLAY_FOLDER]')
         exit(1)
 
-    replays_directory = sys.argv[1]
+    database = load_database_json(DB_FILE)
+    if len(sys.argv) == 2:
+        replays_directory = sys.argv[1]
+        # make sure directory name doesn't have a trailing /
+        if replays_directory.endswith('/'):
+            replays_directory = replays_directory[:-1]
+        database = load_replay_files(database, replays_directory)
 
-    # make sure directory name doesn't have a trailing /
-    if replays_directory.endswith('/'):
-        replays_directory = replays_directory[:-1]
+    save_database_json(database, DB_FILE)
+    print(f"Database saved to {DB_FILE}")
 
-    players = get_players_stats(replays_directory)
-
+    players = database["players"]
     query_nick = ""
     while query_nick != 'exit':
         query_nick = input("Player: ")
@@ -199,9 +219,9 @@ if __name__ == '__main__':
             continue
 
         sorted_maps = sorted(players[query_nick]['games'].items(), \
-            reverse=True, key=lambda item: item[1]['win_rate'])
+            key=lambda item: item[1]['win_rate'])
         sorted_heroes = sorted(players[query_nick]['heroes'].items(), \
-            reverse=True, key=lambda item: item[1]['total_games'])
+            key=lambda item: item[1]['total_games'])
 
         if TESTING:
             pp.pprint(players[query_nick])
@@ -209,5 +229,4 @@ if __name__ == '__main__':
         print_overall_stats(players[query_nick])
         print_heroes(sorted_heroes)
         print_maps(sorted_maps)
-        print(f"Suggested ban: {sorted_heroes[0][0]}")
         print()
