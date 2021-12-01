@@ -17,3 +17,17 @@ After you loaded your database once, you don't need to do it again, simply
 python3 heroes_db.py
 ```
 Obs: assuming there is a `db.json` file on your current directory
+
+## Compiling to Windows (exe)
+We'll use PyInstaller. First we create a `.spec` file
+
+```bash
+sudo rm -rf build dist
+sudo docker run -v "$(pwd):/src/" cdrx/pyinstaller-linux "pyinstaller --onefile heroes_db.py"
+```
+
+Then we generate the binary
+```bash
+sudo docker run -v "$(pwd):/src/" cdrx/pyinstaller-windows
+```
+
