@@ -25,7 +25,7 @@ def get_game_id(full_filename):
         protocol = build(baseBuild)
     except:
         print('Unsupported base build: %d' % baseBuild, file=sys.stderr)
-        sys.exit(1)
+        return None
 
     contents = archive.read_file('replay.initData')
     initdata = protocol.decode_replay_initdata(contents)
@@ -139,8 +139,10 @@ def load_replay_files(database, directory):
         full_filename = directory+'/'+filename
 
         game_id = get_game_id(full_filename)
+        if not game_id: # unsuported protocol
+            continue
+
         if game_id in seen_games:
-            # if TESTING:
             print(f"Replay {filename} already seen in {seen_games[game_id]}")
             continue
         seen_games[game_id] = filename
