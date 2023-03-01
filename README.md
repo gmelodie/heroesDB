@@ -1,5 +1,5 @@
 # heroesDB
-Figure out what your enemy plays with on Heroes of the Storm
+Figure out what your enemy plays most with on Heroes of the Storm
 
 ## Installation
 ```bash

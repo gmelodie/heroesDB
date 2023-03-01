@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Stats - {{ username }}</title>
+</head>
+<body>
+    <h1>Player: {{ username }}</h1>
+    <ul>
+        <li>Overall win rate: {{ player['win_rate'] }}%</li>
+    </ul>
+    
+    <h2> HEROES </h2>
+    <ul>
+    {% for hero, stats in heroes %}
+    <li> <strong> {{ hero }} </strong>
+        <ul>
+            <li>Total Games: {{ stats['total_games'] }}</li>
+            <li>Win Rate: {{ stats['win_rate'] }}%</li>
+        </ul>
+    </li>
+    {% endfor %}
+    </ul>
+
+    <h2> MAPS </h2>
+    <ul>
+    {% for map_title, stats in maps %}
+        <li> <strong> {{ map_title }} </strong>
+            <ul>
+                <li>Win Rate: {{ stats['win_rate'] }}%</li>
+            </ul>
+        </li>
+    {% endfor %}
+    </ul>
+
+</body>
+</html>
+

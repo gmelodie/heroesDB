@@ -1,0 +1,7 @@
+<h1>HeroesDB</h1>
+<p>Find out what heroes your opponents (and friends) play the most often on Heroes of The Storm!</p>
+
+<form action="{{ url_for('search_user') }}">
+  <input id="username" name="username" type="text" value='{{ username }}' />  
+  <input type="submit" />
+</form>
