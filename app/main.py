@@ -39,21 +39,21 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def process_replay_file(full_filename):
+def process_replay_file(filename):
     players = database["players"]
     seen_games = database["seen_games"]
 
-    game_id = get_game_id(full_filename)
+    game_id = get_game_id(filename)
     if not game_id: # unsuported protocol
-        print(f"unsupported protocol on replay {full_filename}")
+        print(f"unsupported protocol on replay {filename}")
         return
 
     if game_id in seen_games:
-        print(f"Replay {full_filename} already seen in {seen_games[game_id]}")
+        print(f"Replay {filename} already seen in {seen_games[game_id]}")
         return
-    seen_games[game_id] = full_filename
+    seen_games[game_id] = filename
 
-    details = get_details(full_filename)
+    details = get_details(filename)
     update_players_info(details, players)
     save_database_json(database, DB_FILE)
 
@@ -64,29 +64,22 @@ def upload_replay():
     if request.method == 'GET':
         return render_template('upload.html')
 
-    # check if the post request has the "file" part
-    if not request.files.getlist("file"):
-        app.logger.error('could not find "files" on request')
-        return redirect(request.url)
-
     files = request.files.getlist("file")
     for file in files:
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
         if file.filename == '':
-            app.logger.error('found one empty file')
-            return redirect(request.url)
+            app.logger.error('found empty file, skipping')
+            continue
+        if not allowed_file(file.filename):
+            app.logger.error(f'illegal filename {filename}')
+            continue
 
-        if file and allowed_file(file.filename):
-            app.logger.info(f'{file.filename} allowed')
-            full_filename = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-            file.save(full_filename)
-            process_replay_file(full_filename)
+        full_filename = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+        file.save(full_filename)
+        process_replay_file(full_filename)
+        os.remove(full_filename)
+        app.logger.info('file %s processed successfully', full_filename)
 
-            # remove file after processed
-            os.remove(full_filename)
-            app.logger.info('file %s processed successfully', full_filename)
-    return f'{len(files)} Replays upload successfully'
+    return f'{len(files)} replays uploaded successfully'
 
 
 @app.route('/stats')

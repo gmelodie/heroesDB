@@ -12,8 +12,8 @@ DB_FILE="db.json"
 TESTING=False
 pp = pprint.PrettyPrinter(indent=4)
 
-def get_game_id(full_filename):
-    archive = mpyq.MPQArchive(full_filename)
+def get_game_id(filename):
+    archive = mpyq.MPQArchive(filename)
 
     # Read the protocol header, this can be read with any protocol
     contents = archive.header['user_data_header']['content']
