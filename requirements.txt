@@ -2,3 +2,4 @@ heroprotocol
 tqdm
 mpyq
 flask
+gunicorn
