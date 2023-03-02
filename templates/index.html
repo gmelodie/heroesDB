@@ -1,7 +1,21 @@
 <h1>HeroesDB</h1>
 <p>Find out what heroes your opponents (and friends) play the most often on Heroes of The Storm!</p>
 
+<h3>Find a player</h3>
 <form action="{{ url_for('search_user') }}">
   <input id="username" name="username" type="text" value='{{ username }}' />  
   <input type="submit" />
 </form>
+
+<!-- <a href="/upload">Upload your replays</a> -->
+<h3>Upload your replays</h3>
+<form action = "/upload" method="POST" enctype="multipart/form-data">
+  <input type="file" name="file" multiple />
+  <input type = "submit" value="Upload">
+</form>
+
+<ul>
+  <li><a href="/db.json" download>Download</a> or <a href="/db.json">take a look</a> at the database</li>
+  <li><a href="/stats">Overall database statistics</a></li>
+  <li><a href="/stats/players">Full list of players</a></li>
+</ul>

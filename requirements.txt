@@ -1,3 +1,4 @@
 heroprotocol
 tqdm
+mpyq
 flask
